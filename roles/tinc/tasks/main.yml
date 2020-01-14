@@ -34,6 +34,7 @@
     dest=/etc/tinc/nets.boot
   notify:
     - restart tinc
+    - restart tinc redhat 6
 
 - name: ensure tinc.conf contains connection to all other nodes
   template: >
@@ -41,6 +42,7 @@
     dest=/etc/tinc/{{ netname }}/tinc.conf
   notify:
     - reload tinc
+    - reload tinc redhat 6
 
 - name: create tinc-up file
   template: >
@@ -49,6 +51,7 @@
     mode=0755
   notify:
     - restart tinc
+    - restart tinc redhat 6
 
 - name: create tinc-down file
   template: >
@@ -57,6 +60,7 @@
     mode=0755
   notify:
     - restart tinc
+    - restart tinc redhat 6
 
 - name: ensure tinc hosts file binds to physical ip address
   lineinfile: >
@@ -66,6 +70,7 @@
     create=yes
   notify:
     - restart tinc
+    - restart tinc redhat 6
 
 - name: ensure subnet ip address is properly set in tinc host file
   lineinfile: >
@@ -75,6 +80,7 @@
     create=yes
   notify:
     - restart tinc
+    - restart tinc redhat 6
 
 - name: check whether /etc/tinc/netname/hosts/inventory_hostname contains "-----END RSA PUBLIC KEY-----"
   command: awk '/^-----END RSA PUBLIC KEY-----$/'  /etc/tinc/{{ netname }}/hosts/{{ inventory_hostname }}
@@ -94,6 +100,7 @@
     creates: /etc/tinc/{{ netname }}/rsa_key.priv
   notify:
     - restart tinc
+    - restart tinc redhat 6
 
 - name: fetch tinc hosts file after key creation
   fetch: >
@@ -102,6 +109,7 @@
     flat=yes
   notify:
     - reload tinc
+    - reload tinc redhat 6
 
 - name: sync the fetched tinc hosts files on each host
   synchronize: >
@@ -109,38 +117,51 @@
     dest=/etc/tinc/{{ netname }}/hosts/
   notify:
     - reload tinc
+    - reload tinc redhat 6
+  tags:
+    - sync_hosts
 
 - name: run handlers
   meta: flush_handlers
 
-- name: ensure tinc is started
+- name: ensure tinc is started on boot redhat 6
+  lineinfile: >
+    dest=/etc/rc.d/rc.local
+    regexp='^tincd -n '
+    line="tincd -n {{ netname }}"
+    create=yes
+  when: (ansible_facts['distribution'] == "RedHat" and ansible_distribution_major_version == "6")
+
+- name: ensure tinc is started redhat 6
+  shell: tincd -n {{ netname }}
+  when: (ansible_facts['distribution'] == "RedHat" and ansible_distribution_major_version == "6")
+  ignore_errors: yes
+
+- name: ensure tinc is started on boot redhat 7
   service: >
     name=tinc
     enabled=yes
     state=started
     pattern=tincd -n {{ netname }}
-  when: (ansible_os_family == "RedHat" and ansible_distribution_major_version == "7")
+  when: (ansible_facts['distribution'] == "RedHat" and ansible_distribution_major_version == "7")
 
-- name: ensure tinc is started (14.04)
+- name: ensure tinc is started on boot (Ubuntu 14.04)
   service:
     name=tinc
     enabled=yes
     state=restarted
-  when: ansible_distribution_version == '14.04'
+  when: "ansible_facts['distribution'] == 'Ubuntu' and ansible_distribution_version is version('18.04', 'lt')"
+  tags:
+    - service
 
-- name: ensure tinc is started (16.04)
-  service:
-    name=tinc
-    enabled=yes
-    state=restarted
-  when: ansible_distribution_version == '16.04'
-
-- name: ensure tinc is started (18.04)
+- name: ensure tinc is started on boot (Ubuntu 18.04)
   service:
     name="tinc@{{ netname }}"
     enabled=yes
     state=restarted
-  when: ansible_distribution_version == '18.04'
+  when: "ansible_facts['distribution'] == 'Ubuntu' and ansible_distribution_version is version('18.04', 'ge')"
+  tags:
+    - service
 
 - name: add nodes to /etc/hosts (ansible_inventory resolves to vpn_ip)
   lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].vpn_ip }} {{item}}" state=present

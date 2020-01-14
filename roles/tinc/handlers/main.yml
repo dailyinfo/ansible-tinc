@@ -5,19 +5,21 @@
     name="tinc@{{ netname }}"
     enabled=yes
     state=restarted
+  when: "(ansible_facts['distribution'] == 'Ubuntu' and ansible_distribution_version is version('18.04', 'ge')) or (ansible_os_family == 'RedHat' and ansible_distribution_major_version == '7')"
 
 - name: reload tinc
   service: >
     name="tinc@{{ netname }}"
     state=reloaded
     enabled=yes
+  when: "(ansible_facts['distribution'] == 'Ubuntu' and ansible_distribution_version is version('18.04', 'ge')) or (ansible_os_family == 'RedHat' and ansible_distribution_major_version == '7')"
 
-#- name: restart tinc
-#  find:
-#    paths: /tmp
-#    age: 2d
-#
-#- name: reload tinc
-#  find:
-#    paths: /tmp
-#    age: 2d
+- name: restart tinc redhat 6
+  shell: tincd -n {{ netname }} -kHUP
+#  shell: pwd
+  when: (ansible_facts['distribution'] == "RedHat" and ansible_distribution_major_version == "6")
+
+- name: reload tinc redhat 6
+  shell: tincd -n {{ netname }} -kHUP
+#  shell: pwd
+  when: (ansible_facts['distribution'] == "RedHat" and ansible_distribution_major_version == "6")
