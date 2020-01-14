@@ -61,6 +61,7 @@
 - name: ensure tinc hosts file binds to physical ip address
   lineinfile: >
     dest=/etc/tinc/{{ netname }}/hosts/{{ inventory_hostname }}
+    regexp='^Address = '
     line="Address = {{ physical_ip }}"
     create=yes
   notify:
@@ -69,6 +70,7 @@
 - name: ensure subnet ip address is properly set in tinc host file
   lineinfile: >
     dest=/etc/tinc/{{ netname }}/hosts/{{ inventory_hostname }}
+    regexp='^Subnet = '
     line="Subnet = {{ vpn_ip }}/{{ vpn_subnet_cidr_netmask }}"
     create=yes
   notify:
@@ -117,6 +119,28 @@
     enabled=yes
     state=started
     pattern=tincd -n {{ netname }}
+  when: (ansible_os_family == "RedHat" and ansible_distribution_major_version == "7")
+
+- name: ensure tinc is started (14.04)
+  service:
+    name=tinc
+    enabled=yes
+    state=restarted
+  when: ansible_distribution_version == '14.04'
+
+- name: ensure tinc is started (16.04)
+  service:
+    name=tinc
+    enabled=yes
+    state=restarted
+  when: ansible_distribution_version == '16.04'
+
+- name: ensure tinc is started (18.04)
+  service:
+    name="tinc@{{ netname }}"
+    enabled=yes
+    state=restarted
+  when: ansible_distribution_version == '18.04'
 
 - name: add nodes to /etc/hosts (ansible_inventory resolves to vpn_ip)
   lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].vpn_ip }} {{item}}" state=present

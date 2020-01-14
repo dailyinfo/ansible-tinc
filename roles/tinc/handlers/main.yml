@@ -1,11 +1,23 @@
 ---
 
 - name: restart tinc
-  service: >
-    name=tinc
+  service:
+    name="tinc@{{ netname }}"
+    enabled=yes
     state=restarted
 
 - name: reload tinc
   service: >
-    name=tinc
+    name="tinc@{{ netname }}"
     state=reloaded
+    enabled=yes
+
+#- name: restart tinc
+#  find:
+#    paths: /tmp
+#    age: 2d
+#
+#- name: reload tinc
+#  find:
+#    paths: /tmp
+#    age: 2d

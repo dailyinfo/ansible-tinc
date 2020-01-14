@@ -6,6 +6,28 @@
     enabled=no
     state=stopped
     pattern=tincd -n {{ netname }}
+  when: (ansible_os_family == "RedHat" and ansible_distribution_major_version == "7")
+
+- name: ensure tinc is stopped (14.04)
+  service:
+    name=tinc
+    enabled=no
+    state=stopped
+  when: ansible_distribution_version == '14.04'
+
+- name: ensure tinc is started (16.04)
+  service:
+    name=tinc
+    enabled=no
+    state=stopped
+  when: ansible_distribution_version == '16.04'
+
+- name: ensure tinc is started (18.04)
+  service:
+    name="tinc@{{ netname }}"
+    enabled=no
+    state=stopped
+  when: ansible_distribution_version == '18.04'
 
 - name: delete tinc netname directory
   file: >

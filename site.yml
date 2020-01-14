@@ -1,9 +1,11 @@
 ---
 
-- hosts: vpn
+- hosts: tinc_vpn
+  become: true
   roles:
     - tinc
 
 - hosts: removevpn
+  become: true
   roles:
     - tinc-remove
