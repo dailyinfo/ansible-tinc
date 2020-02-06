@@ -1,5 +1,6 @@
 ---
-
+- debug:
+    var: tinc_node_name
 - name: install epel-release (redhat)
   yum: >
     name=epel-release
@@ -64,7 +65,7 @@
 
 - name: ensure tinc hosts file binds to physical ip address
   lineinfile: >
-    dest=/etc/tinc/{{ netname }}/hosts/{{ inventory_hostname }}
+    dest=/etc/tinc/{{ netname }}/hosts/{{ inventory_hostname | replace("-", "_") }}
     regexp='^Address = '
     line="Address = {{ physical_ip }}"
     create=yes
@@ -74,7 +75,7 @@
 
 - name: ensure subnet ip address is properly set in tinc host file
   lineinfile: >
-    dest=/etc/tinc/{{ netname }}/hosts/{{ inventory_hostname }}
+    dest=/etc/tinc/{{ netname }}/hosts/{{ inventory_hostname | replace("-", "_") }}
     regexp='^Subnet = '
     line="Subnet = {{ vpn_ip }}/{{ vpn_subnet_cidr_netmask }}"
     create=yes
@@ -83,7 +84,7 @@
     - restart tinc redhat 6
 
 - name: check whether /etc/tinc/netname/hosts/inventory_hostname contains "-----END RSA PUBLIC KEY-----"
-  command: awk '/^-----END RSA PUBLIC KEY-----$/'  /etc/tinc/{{ netname }}/hosts/{{ inventory_hostname }}
+  command: awk '/^-----END RSA PUBLIC KEY-----$/'  /etc/tinc/{{ netname }}/hosts/{{ inventory_hostname | replace("-", "_") }}
   changed_when: "public_key.stdout != '-----END RSA PUBLIC KEY-----'"
   register: public_key
 
@@ -104,8 +105,8 @@
 
 - name: fetch tinc hosts file after key creation
   fetch: >
-    src=/etc/tinc/{{ netname }}/hosts/{{ inventory_hostname }}
-    dest=fetch/{{ inventory_hostname }}
+    src=/etc/tinc/{{ netname }}/hosts/{{ inventory_hostname | replace("-", "_") }}
+    dest=fetch/{{ inventory_hostname | replace("-", "_") }}
     flat=yes
   notify:
     - reload tinc
