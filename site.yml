@@ -11,8 +11,8 @@
         rules:  "-A INPUT -p tcp -m tcp --dport 655 -i {{ ansible_default_ipv4.interface }} -j ACCEPT"
     - name: setup firewall udp rules for mysql tinc vpn
       iptables_raw:
-        name: allow_eth0_tcp_655
-        rules:  "-A INPUT -p tcp -m udp --dport 655 -i {{ ansible_default_ipv4.interface }} -j ACCEPT"
+        name: allow_eth0_udp_655
+        rules:  "-A INPUT -p udp -m udp --dport 655 -i {{ ansible_default_ipv4.interface }} -j ACCEPT"
 
 - hosts: removevpn
   become: true
