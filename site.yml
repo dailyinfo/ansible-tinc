@@ -5,6 +5,9 @@
   roles:
     - tinc
   pre_tasks:
+    - name: install iptables-persistent
+      package:
+        name: iptables-persistent
     - name: setup firewall udp rules for mysql tinc vpn
       iptables_raw:
         name: allow_eth0_tcp_655
